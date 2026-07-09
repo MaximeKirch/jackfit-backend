@@ -8,7 +8,7 @@ export const validate =
       res.status(400).json({ error: formatZodError(result.error) })
       return
     }
-    req.body = result.data
+    req.body = result.data as unknown
     next()
   }
 
