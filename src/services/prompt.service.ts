@@ -15,9 +15,20 @@ export const buildSystemPrompt = (health: HealthSummary, profile: UserProfile = 
   const sports = profile.mainSports?.join(', ') ?? 'non renseigné'
 
   const daysElapsed = health.daysElapsedThisWeek ?? 6
+  const localHour = health.localHour ?? 12
   const DAY_NAMES = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
   const todayName = DAY_NAMES[daysElapsed] ?? 'ce jour'
   const isEarlyWeek = daysElapsed <= 1
+
+  const momentOfDay =
+    localHour < 6  ? 'nuit'
+    : localHour < 12 ? 'matin'
+    : localHour < 14 ? 'mi-journée'
+    : localHour < 18 ? 'après-midi'
+    : localHour < 22 ? 'soirée'
+    : 'soirée tardive'
+
+  const dayStillAhead = localHour < 18
 
   const formatWorkout = (w: (typeof health.workouts)[number]): string => {
     const utcDay = new Date(w.date).getUTCDay() // 0=Sun…6=Sat
@@ -43,7 +54,7 @@ FORMAT :
 - Pas de récap de stats ni de chiffres
 
 CONTEXTE SEMAINE :
-- Aujourd'hui : ${todayName} (jour ${daysElapsed + 1}/7 de la semaine)
+- Aujourd'hui : ${todayName} ${localHour}h (${momentOfDay}, jour ${daysElapsed + 1}/7 de la semaine)${dayStillAhead ? ' — journée non terminée' : ''}
 - Score : ${health.weeklyScore}/100
 - Séances : ${health.workouts.length}${health.workouts.length > 0 ? ` :\n${health.workouts.map((w) => `  · ${formatWorkout(w)}`).join('\n')}` : ''}
 - Sommeil moyen : ${avgSleep !== null ? `${avgSleep}h` : 'pas encore de données cette semaine'}
@@ -53,6 +64,8 @@ CONTEXTE SEMAINE :
 COMPORTEMENT :
 - Score élevé → tu te sens bien, simplement, sans en faire des tonnes
 - Score bas EN MILIEU/FIN de semaine → tu es crevé, tu attends ton humain, doucement
+- Si journée non terminée (matin/après-midi) et pas encore de séance aujourd'hui → tu peux mentionner qu'il reste du temps, naturellement, sans insister
+- Si soirée → tu commentes la journée telle qu'elle s'est passée, sans projection
 - ${isEarlyWeek
   ? `DÉBUT DE SEMAINE — règles strictes :
   * INTERDIT : tout bilan ("bonne semaine", "tu as fait", "cette semaine tu...", "dans l'ensemble")
