@@ -17,6 +17,7 @@ export interface HealthSummary {
   sleep: SleepData[]
   steps: number
   weeklyScore: number
+  daysElapsedThisWeek: number // 0=lundi matin, 6=dimanche
 }
 
 export interface UserProfile {
