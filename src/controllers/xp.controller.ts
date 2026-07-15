@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express'
 import { createClient } from '@supabase/supabase-js'
 import { z } from 'zod'
-import { computeWeeklyXp, stageForXp } from '../services/xp.service'
+import { computeWeeklyXp, stageForXp, type XpBreakdown } from '../services/xp.service'
 
 const XpRequestSchema = z.object({
   user_id:    z.string().uuid(),
@@ -26,26 +26,30 @@ export const computeXpHandler = async (req: Request, res: Response): Promise<voi
   )
 
   // Idempotence — return existing award if this week was already processed
-  const { data: existing } = await client
+  const { data: existingRaw } = await client
     .from('xp_transactions')
     .select('xp_awarded, breakdown')
     .eq('user_id', user_id)
     .eq('week_start', week_start)
     .maybeSingle()
 
+  const existing = existingRaw as { xp_awarded: number; breakdown: XpBreakdown } | null
+
   if (existing) {
-    const { data: prog } = await client
+    const { data: progRaw } = await client
       .from('pet_progression')
       .select('total_xp, current_stage')
       .eq('user_id', user_id)
       .maybeSingle()
 
+    const prog = progRaw as { total_xp: number; current_stage: string } | null
+
     res.json({
-      xp_awarded: existing.xp_awarded as number,
-      breakdown: existing.breakdown,
-      total_xp: (prog?.total_xp as number) ?? 0,
-      current_stage: prog?.current_stage ?? 'JEUNE_CHIOT',
-      stage_changed: false,
+      xp_awarded:        existing.xp_awarded,
+      breakdown:         existing.breakdown,
+      total_xp:          prog?.total_xp ?? 0,
+      current_stage:     prog?.current_stage ?? 'JEUNE_CHIOT',
+      stage_changed:     false,
       already_processed: true,
     })
     return

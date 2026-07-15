@@ -4,6 +4,7 @@ process.env['SUPABASE_JWT_SECRET'] = 'test-jwt-secret'
 import request from 'supertest'
 import jwt from 'jsonwebtoken'
 import app from '../src/app'
+import * as supabaseService from '../src/services/supabase.service'
 
 const TEST_SECRET = 'test-jwt-secret'
 const TEST_USER_ID = 'a1b2c3d4-0000-0000-0000-000000000001'
@@ -85,9 +86,7 @@ describe('POST /chat', () => {
   })
 
   it('returns 429 when rate limit exceeded', async () => {
-    const { checkAndIncrementUsage } = jest.requireMock('../src/services/supabase.service') as {
-      checkAndIncrementUsage: jest.Mock
-    }
+    const checkAndIncrementUsage = jest.mocked(supabaseService.checkAndIncrementUsage)
     checkAndIncrementUsage.mockResolvedValueOnce({ allowed: false, currentCount: 31 })
 
     const res = await request(app)

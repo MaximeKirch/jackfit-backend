@@ -38,11 +38,11 @@ export const checkAndIncrementUsage = async (
   const { data, error } = await supabase.rpc('increment_chat_usage', {
     p_user_id: userId,
     p_limit: dailyLimit,
-  })
+  }) as { data: Array<{ allowed: boolean; current_count: number }> | null; error: Error | null }
 
   if (error) throw error
 
-  const row = (data as Array<{ allowed: boolean; current_count: number }>)[0]
+  const row = (data ?? [])[0]
   return {
     allowed: row?.allowed ?? false,
     currentCount: row?.current_count ?? 0,
