@@ -31,6 +31,24 @@ export const saveMessages = async (
   if (error) throw error
 }
 
+export const checkAndIncrementUsage = async (
+  userId: string,
+  dailyLimit: number,
+): Promise<{ allowed: boolean; currentCount: number }> => {
+  const { data, error } = await supabase.rpc('increment_chat_usage', {
+    p_user_id: userId,
+    p_limit: dailyLimit,
+  })
+
+  if (error) throw error
+
+  const row = (data as Array<{ allowed: boolean; current_count: number }>)[0]
+  return {
+    allowed: row?.allowed ?? false,
+    currentCount: row?.current_count ?? 0,
+  }
+}
+
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {
   const { data, error } = await supabase
     .from('profiles')

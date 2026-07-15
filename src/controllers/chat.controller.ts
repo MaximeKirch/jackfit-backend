@@ -18,19 +18,19 @@ const SleepSchema = z.object({
 })
 
 export const ChatRequestSchema = z.object({
-  userId: z.string().min(1),
   message: z.string().min(1),
   healthData: z.object({
     workouts: z.array(WorkoutSchema),
     sleep: z.array(SleepSchema),
     steps: z.number().nonnegative(),
     weeklyScore: z.number().min(0).max(100),
+    daysElapsedThisWeek: z.number().int().min(0).max(6).default(6),
+    localHour: z.number().int().min(0).max(23).default(12),
   }),
 })
 
 export const handleChat = async (req: Request, res: Response): Promise<void> => {
-  const { userId, message, healthData } = req.body as ChatRequest
-
-  const response = await chat(userId, message, healthData)
+  const { message, healthData } = req.body as ChatRequest
+  const response = await chat(req.userId, message, healthData)
   res.json({ message: response })
 }

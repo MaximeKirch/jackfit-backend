@@ -17,8 +17,8 @@ export interface HealthSummary {
   sleep: SleepData[]
   steps: number
   weeklyScore: number
-  daysElapsedThisWeek: number // 0=lundi matin, 6=dimanche
-  localHour: number           // heure locale 0-23
+  daysElapsedThisWeek: number
+  localHour: number
 }
 
 export interface UserProfile {
@@ -29,7 +29,6 @@ export interface UserProfile {
 }
 
 export interface ChatRequest {
-  userId: string
   message: string
   healthData: HealthSummary
 }

@@ -8,10 +8,10 @@ const app = express()
 
 app.use(cors())
 app.use(express.json())
-app.use(auth)
 
+app.use('/health', healthRouter) // public — no auth
+app.use(auth)
 app.use('/chat', chatRouter)
-app.use('/health', healthRouter)
 
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error(err)
