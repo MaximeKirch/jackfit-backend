@@ -9,6 +9,7 @@ export const chat = async (
   userId: string,
   userMessage: string,
   health: HealthSummary,
+  weeklyScore = 65,
 ): Promise<string> => {
   const [history, profile] = await Promise.all([
     getRecentMessages(userId),
@@ -26,7 +27,7 @@ export const chat = async (
     system: [
       {
         type: 'text',
-        text: buildSystemPrompt(health, profile ?? undefined),
+        text: buildSystemPrompt(health, weeklyScore, profile ?? undefined),
         cache_control: { type: 'ephemeral' },
       },
     ],

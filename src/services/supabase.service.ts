@@ -1,5 +1,5 @@
-import { createClient } from '@supabase/supabase-js'
-import type { AnthropicMessage, UserProfile } from '../types/api.types'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import type { AnthropicMessage, UserProfile, HealthSummary, ScoreResult } from '../types/api.types'
 
 const supabase = createClient(
   process.env['SUPABASE_URL'] ?? '',
@@ -47,6 +47,67 @@ export const checkAndIncrementUsage = async (
     allowed: row?.allowed ?? false,
     currentCount: row?.current_count ?? 0,
   }
+}
+
+export const getUserProfileWithClient = async (
+  client: SupabaseClient,
+  userId: string,
+): Promise<UserProfile | null> => {
+  const { data, error } = await client
+    .from('profiles')
+    .select('first_name, main_sports, weekly_activity_goal, sleep_goal')
+    .eq('id', userId)
+    .single()
+
+  if (error || !data) return null
+
+  const row = data as {
+    first_name?: string
+    main_sports?: string[]
+    weekly_activity_goal: number
+    sleep_goal: number
+  }
+
+  const profile: UserProfile = {
+    weeklyActivityGoal: row.weekly_activity_goal,
+    sleepGoal: row.sleep_goal,
+  }
+  if (row.first_name !== undefined) profile.firstName = row.first_name
+  if (row.main_sports !== undefined) profile.mainSports = row.main_sports
+  return profile
+}
+
+export const upsertHealthData = async (
+  client: SupabaseClient,
+  userId: string,
+  weekStart: string,
+  data: HealthSummary,
+): Promise<void> => {
+  const { error } = await client.from('health_data_raw').upsert(
+    { user_id: userId, week_start: weekStart, data },
+    { onConflict: 'user_id,week_start' },
+  )
+  if (error) throw error
+}
+
+export const upsertWeeklyScore = async (
+  serviceClient: SupabaseClient,
+  userId: string,
+  weekStart: string,
+  result: ScoreResult,
+): Promise<void> => {
+  const { error } = await serviceClient.from('weekly_scores').upsert(
+    {
+      user_id: userId,
+      week_start: weekStart,
+      score: result.score,
+      status: result.status,
+      breakdown: result.breakdown,
+      has_enough_data: result.hasEnoughData,
+    },
+    { onConflict: 'user_id,week_start' },
+  )
+  if (error) throw error
 }
 
 export const getUserProfile = async (userId: string): Promise<UserProfile | null> => {

@@ -5,7 +5,7 @@ const DEFAULT_PROFILE: UserProfile = {
   sleepGoal: 8,
 }
 
-export const buildSystemPrompt = (health: HealthSummary, profile: UserProfile = DEFAULT_PROFILE): string => {
+export const buildSystemPrompt = (health: HealthSummary, weeklyScore = 65, profile: UserProfile = DEFAULT_PROFILE): string => {
   const avgSleep =
     health.sleep.length > 0
       ? (health.sleep.reduce((a, s) => a + s.duration, 0) / health.sleep.length).toFixed(1)
@@ -55,7 +55,7 @@ FORMAT :
 
 CONTEXTE SEMAINE :
 - Aujourd'hui : ${todayName} ${localHour}h (${momentOfDay}, jour ${daysElapsed + 1}/7 de la semaine)${dayStillAhead ? ' — journée non terminée' : ''}
-- Score : ${health.weeklyScore}/100
+- Score : ${weeklyScore}/100
 - Séances : ${health.workouts.length}${health.workouts.length > 0 ? ` :\n${health.workouts.map((w) => `  · ${formatWorkout(w)}`).join('\n')}` : ''}
 - Sommeil moyen : ${avgSleep !== null ? `${avgSleep}h` : 'pas encore de données cette semaine'}
 - Steps : ${health.steps}
