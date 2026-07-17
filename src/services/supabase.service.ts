@@ -84,7 +84,14 @@ export const upsertHealthData = async (
   data: HealthSummary,
 ): Promise<void> => {
   const { error } = await client.from('health_data_raw').upsert(
-    { user_id: userId, week_start: weekStart, data },
+    {
+      user_id: userId,
+      week_start: weekStart,
+      workouts: data.workouts,
+      sleep: data.sleep,
+      steps: data.steps,
+      synced_at: new Date().toISOString(),
+    },
     { onConflict: 'user_id,week_start' },
   )
   if (error) throw error
@@ -103,7 +110,7 @@ export const upsertWeeklyScore = async (
       score: result.score,
       status: result.status,
       breakdown: result.breakdown,
-      has_enough_data: result.hasEnoughData,
+      computed_at: new Date().toISOString(),
     },
     { onConflict: 'user_id,week_start' },
   )

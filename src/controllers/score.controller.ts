@@ -100,36 +100,52 @@ export const scoreHandler = async (req: Request, res: Response): Promise<void> =
   const ratios = computeXpRatios(healthData, config)
   const { xpAwarded, breakdown: xpBreakdown } = computeWeeklyXp(ratios)
 
-  await serviceClient.from('xp_transactions').upsert(
+  const { error: xpUpsertError } = await serviceClient.from('xp_transactions').upsert(
     { user_id: userId, week_start: weekStart, xp_awarded: xpAwarded, breakdown: xpBreakdown },
     { onConflict: 'user_id,week_start' },
   )
+  if (xpUpsertError) {
+    console.error('[score] xp_transactions upsert failed:', xpUpsertError)
+    throw xpUpsertError
+  }
 
-  const { data: xpRows } = await serviceClient
+  const { data: xpRows, error: xpSelectError } = await serviceClient
     .from('xp_transactions')
     .select('xp_awarded')
     .eq('user_id', userId)
+  if (xpSelectError) {
+    console.error('[score] xp_transactions select failed:', xpSelectError)
+    throw xpSelectError
+  }
 
   const totalXp = ((xpRows ?? []) as Array<{ xp_awarded: number }>)
     .reduce((sum, row) => sum + row.xp_awarded, 0)
 
   const currentStage = stageForXp(totalXp)
 
-  const { data: existingProg } = await serviceClient
+  const { data: existingProg, error: progSelectError } = await serviceClient
     .from('pet_progression')
     .select('current_stage, stage_entered_at')
     .eq('user_id', userId)
     .maybeSingle()
+  if (progSelectError) {
+    console.error('[score] pet_progression select failed:', progSelectError)
+    throw progSelectError
+  }
 
   const prog = existingProg as { current_stage: string; stage_entered_at: string } | null
   const stageEnteredAt = prog?.current_stage === currentStage
     ? prog.stage_entered_at
     : new Date().toISOString()
 
-  await serviceClient.from('pet_progression').upsert(
+  const { error: progUpsertError } = await serviceClient.from('pet_progression').upsert(
     { user_id: userId, total_xp: totalXp, current_stage: currentStage, stage_entered_at: stageEnteredAt },
     { onConflict: 'user_id' },
   )
+  if (progUpsertError) {
+    console.error('[score] pet_progression upsert failed:', progUpsertError)
+    throw progUpsertError
+  }
 
   const response: ScoreResponse = { ...result, totalXp, currentStage }
   res.json(response)
