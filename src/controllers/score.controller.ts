@@ -105,8 +105,7 @@ export const scoreHandler = async (req: Request, res: Response): Promise<void> =
     { onConflict: 'user_id,week_start' },
   )
   if (xpUpsertError) {
-    console.error('[score] xp_transactions upsert failed:', xpUpsertError)
-    throw xpUpsertError
+        throw xpUpsertError
   }
 
   const { data: xpRows, error: xpSelectError } = await serviceClient
@@ -114,8 +113,7 @@ export const scoreHandler = async (req: Request, res: Response): Promise<void> =
     .select('xp_awarded')
     .eq('user_id', userId)
   if (xpSelectError) {
-    console.error('[score] xp_transactions select failed:', xpSelectError)
-    throw xpSelectError
+        throw xpSelectError
   }
 
   const totalXp = ((xpRows ?? []) as Array<{ xp_awarded: number }>)
@@ -129,8 +127,7 @@ export const scoreHandler = async (req: Request, res: Response): Promise<void> =
     .eq('user_id', userId)
     .maybeSingle()
   if (progSelectError) {
-    console.error('[score] pet_progression select failed:', progSelectError)
-    throw progSelectError
+        throw progSelectError
   }
 
   const prog = existingProg as { current_stage: string; stage_entered_at: string } | null
@@ -143,8 +140,7 @@ export const scoreHandler = async (req: Request, res: Response): Promise<void> =
     { onConflict: 'user_id' },
   )
   if (progUpsertError) {
-    console.error('[score] pet_progression upsert failed:', progUpsertError)
-    throw progUpsertError
+        throw progUpsertError
   }
 
   const response: ScoreResponse = { ...result, totalXp, currentStage }
