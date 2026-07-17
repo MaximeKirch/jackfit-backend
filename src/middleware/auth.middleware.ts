@@ -1,7 +1,11 @@
 import type { Request, Response, NextFunction } from 'express'
-import jwt from 'jsonwebtoken'
+import { createRemoteJWKSet, jwtVerify } from 'jose'
 
-export const auth = (req: Request, res: Response, next: NextFunction): void => {
+const JWKS = createRemoteJWKSet(
+  new URL(`${process.env['SUPABASE_URL'] ?? ''}/auth/v1/.well-known/jwks.json`)
+)
+
+export const auth = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   const authHeader = req.headers.authorization
   if (!authHeader?.startsWith('Bearer ')) {
     res.status(401).json({ error: 'Unauthorized' })
@@ -9,12 +13,10 @@ export const auth = (req: Request, res: Response, next: NextFunction): void => {
   }
 
   const token = authHeader.slice(7)
-  // Read lazily so test setup can set the env var before requests are made
-  const secret = process.env['SUPABASE_JWT_SECRET'] ?? ''
 
   try {
-    const payload = jwt.verify(token, secret) as { sub: string }
-    req.userId = payload.sub
+    const { payload } = await jwtVerify(token, JWKS)
+    req.userId = payload.sub ?? ''
     next()
   } catch {
     res.status(401).json({ error: 'Unauthorized' })

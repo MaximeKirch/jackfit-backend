@@ -1,5 +1,20 @@
 // Set env before any module is loaded
-process.env['SUPABASE_JWT_SECRET'] = 'test-jwt-secret'
+process.env['SUPABASE_URL'] = 'http://localhost:54321'
+
+// jose is ESM-only; stub it so ts-jest can load the auth middleware
+jest.mock('jose', () => ({
+  createRemoteJWKSet: jest.fn().mockReturnValue({}),
+  jwtVerify: jest.fn().mockImplementation((token: string) => {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const jwtLib = require('jsonwebtoken') as typeof import('jsonwebtoken')
+    try {
+      const payload = jwtLib.verify(token, 'test-jwt-secret') as { sub: string }
+      return Promise.resolve({ payload })
+    } catch {
+      return Promise.reject(new Error('invalid token'))
+    }
+  }),
+}))
 
 import request from 'supertest'
 import jwt from 'jsonwebtoken'
