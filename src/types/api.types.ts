@@ -42,6 +42,11 @@ export interface ScoreResult {
   hasEnoughData: boolean
 }
 
+export interface ScoreResponse extends ScoreResult {
+  totalXp: number
+  currentStage: string
+}
+
 export interface ScoreRequest {
   healthData: HealthSummary
   config?: Partial<ScoringConfig>
