@@ -3,5 +3,5 @@ module.exports = {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/tests'],
-  transformIgnorePatterns: ['node_modules/(?!(jose)/)'],
+  transformIgnorePatterns: ['node_modules/'],
 }

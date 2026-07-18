@@ -1,20 +1,16 @@
 // Set env before any module is loaded
 process.env['SUPABASE_URL'] = 'http://localhost:54321'
 
-// jose is ESM-only; stub it so ts-jest can load the auth middleware
-jest.mock('jose', () => ({
-  createRemoteJWKSet: jest.fn().mockReturnValue({}),
-  jwtVerify: jest.fn().mockImplementation((token: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const jwtLib = require('jsonwebtoken') as typeof import('jsonwebtoken')
-    try {
-      const payload = jwtLib.verify(token, 'test-jwt-secret') as { sub: string }
-      return Promise.resolve({ payload })
-    } catch {
-      return Promise.reject(new Error('invalid token'))
-    }
+// jwks-rsa makes HTTP calls; stub it so tests don't hit the network
+jest.mock('jwks-rsa', () =>
+  jest.fn().mockReturnValue({
+    getSigningKey: jest.fn().mockImplementation(
+      (_kid: string, cb: (err: null, key: { getPublicKey: () => string }) => void) => {
+        cb(null, { getPublicKey: () => 'test-jwt-secret' })
+      },
+    ),
   }),
-}))
+)
 
 import request from 'supertest'
 import jwt from 'jsonwebtoken'
@@ -26,7 +22,7 @@ const TEST_USER_ID = 'a1b2c3d4-0000-0000-0000-000000000001'
 
 // Sign a valid test JWT
 const makeToken = (sub = TEST_USER_ID) =>
-  jwt.sign({ sub, role: 'authenticated' }, TEST_SECRET, { expiresIn: '1h' })
+  jwt.sign({ sub, role: 'authenticated' }, TEST_SECRET, { expiresIn: '1h', keyid: 'test-key' })
 
 jest.mock('../src/services/anthropic.service', () => ({
   chat: jest.fn().mockResolvedValue("J'ai tellement d'énergie aujourd'hui ! Continue comme ça. 🐾"),
