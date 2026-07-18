@@ -13,7 +13,7 @@ app.use(express.json())
 
 app.use('/health', healthRouter)   // public — no auth
 app.use('/internal', xpRouter)     // internal — x-internal-secret auth (handled per-route)
-app.use(auth)
+app.use((req, res, next) => void auth(req, res, next))
 app.use('/chat', chatRouter)
 app.use('/score', scoreRouter)
 

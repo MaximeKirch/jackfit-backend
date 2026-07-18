@@ -4,7 +4,7 @@ import { z } from 'zod'
 import { createUserClient } from '../services/userClient'
 import { getUserProfileWithClient, upsertHealthData, upsertWeeklyScore } from '../services/supabase.service'
 import { computeWeeklyScore } from '../services/scoring.service'
-import { computeWeeklyXp, stageForXp, type XpRatios, type XpBreakdown } from '../services/xp.service'
+import { computeWeeklyXp, stageForXp, type XpRatios } from '../services/xp.service'
 import type { ScoringConfig, HealthSummary, ScoreResponse } from '../types/api.types'
 
 const DEFAULT_CONFIG: ScoringConfig = {

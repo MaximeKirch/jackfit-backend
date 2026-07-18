@@ -5,7 +5,7 @@ process.env['SUPABASE_URL'] = 'http://localhost:54321'
 jest.mock('jose', () => ({
   createRemoteJWKSet: jest.fn().mockReturnValue({}),
   jwtVerify: jest.fn().mockImplementation((token: string) => {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const jwtLib = require('jsonwebtoken') as typeof import('jsonwebtoken')
     try {
       const payload = jwtLib.verify(token, 'test-jwt-secret') as { sub: string }
